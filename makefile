@@ -3,6 +3,7 @@ CLOCK      = 9830400
 PROGRAMMER = -c usbtiny -P usb
 OBJECTS    = main.o i2c.o ds1631.o
 SRC		   = src
+INCLUDE    = include
 FUSES      = -U hfuse:w:0xd9:m -U lfuse:w:0xe0:m
 
 # Fuse Low Byte = 0xe0   Fuse High Byte = 0xd9   Fuse Extended Byte = 0xff
@@ -32,10 +33,10 @@ all: main.hex
 main.o: main.c
 	$(COMPILE) -c $< -o $@
 
-i2c.o: $(SRC)/i2c.c include/i2c.h
+i2c.o: $(SRC)/i2c.c $(INCLUDE)/i2c.h
 	$(COMPILE) -c $< -o $@
 
-ds1631.o: $(SRC)/ds1631.c include/ds1631.h
+ds1631.o: $(SRC)/ds1631.c $(INCLUDE)/ds1631.h
 	$(COMPILE) -c $< -o $@
 
 .c.o: 
