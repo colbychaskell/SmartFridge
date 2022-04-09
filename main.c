@@ -184,9 +184,12 @@ void read_temp(unsigned char* buf) {
     data = 0x02;
     status = i2c_io(device_addr, &reg_addr, 1, &data, 1, NULL, 0);
     // read from "device id register'
-    reg_addr = 0xEE;
-    status = i2c_io(device_addr, &reg_addr, 1, NULL, 0, NULL, 0);
+    //reg_addr = 0xEE;
+    //status = i2c_io(device_addr, &reg_addr, 1, NULL, 0, NULL, 0);
     reg_addr = 0xAA;
+    while(1) {
+        status = i2c_io(device_addr, &reg_addr, 1, NULL, 0, buf, 2);
+    }
     //_delay_ms(5);
     status = i2c_io(device_addr, &reg_addr, 1, NULL, 0, buf, 2);
     // _delay_ms(2000);
