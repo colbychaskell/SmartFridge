@@ -9,5 +9,4 @@ int main(void)
 {
     ds1631_init();
     int temp = ds1631_read_temp();
-
 }
