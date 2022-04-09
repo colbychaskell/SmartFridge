@@ -18,6 +18,7 @@
 *********************************************************************/
 
 #include <avr/io.h>
+#include "i2c.h"
 
 uint8_t i2c_io(uint8_t, uint8_t *, uint16_t, uint8_t *, uint16_t, uint8_t *, uint16_t);
 void i2c_init(unsigned char);
