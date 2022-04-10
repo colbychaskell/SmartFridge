@@ -1,7 +1,9 @@
 DEVICE     = atmega328p
 CLOCK      = 9830400
 PROGRAMMER = -c usbtiny -P usb
-OBJECTS    = main.o
+OBJECTS    = main.o i2c.o ds1631.o
+SRC		   = src
+INCLUDE    = include
 FUSES      = -U hfuse:w:0xd9:m -U lfuse:w:0xe0:m
 
 # Fuse Low Byte = 0xe0   Fuse High Byte = 0xd9   Fuse Extended Byte = 0xff
@@ -23,12 +25,26 @@ FUSES      = -U hfuse:w:0xd9:m -U lfuse:w:0xe0:m
 # Tune the lines below only if you know what you are doing:
 
 AVRDUDE = avrdude $(PROGRAMMER) -p $(DEVICE)
-COMPILE = avr-gcc -Wall -Os -DF_CPU=$(CLOCK) -mmcu=$(DEVICE)
+COMPILE = avr-gcc -Wall -Os -DF_CPU=$(CLOCK) -mmcu=$(DEVICE) -Iinclude
 
 # symbolic targets:
-all:	main.hex
+all: main.hex
 
-.c.o:
+# Add files for compilation below
+
+#objs: main.o i2c.o ds1631.o
+#	$(COMPILE) main.o i2c.o ds1631.o -o objs
+
+main.o: main.c
+	$(COMPILE) -c $< -o $@
+
+i2c.o: $(SRC)/i2c.c $(INCLUDE)/i2c.h
+	$(COMPILE) -c $< -o $@
+
+ds1631.o: $(SRC)/ds1631.c $(INCLUDE)/ds1631.h
+	$(COMPILE) -c $< -o $@
+
+.c.o: 
 	$(COMPILE) -c $< -o $@
 
 .S.o:
