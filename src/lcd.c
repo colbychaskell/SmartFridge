@@ -13,30 +13,30 @@ void lcd_init(void)
 
     PORTB &= ~LCD_RS;           // Clear RS (PB2) for command write
 
-    _delay_ms(40);              // Delay at least 40ms
+    _delay_ms(100);              // Delay at least 40ms
 
-    lcd_writebyte(0x30);        // Send 00110000 to data pins, set for 8-bit interface (Function set)
+    lcd_writecommand(0x30);        // Send 00110000 to data pins, set for 8-bit interface (Function set)
     _delay_ms(5);               // Delay at least 39usec
 
-    lcd_writebyte(0x20);        // Send 00100000 to data pins, set for 8-bit interface (Function set)
+    lcd_writecommand(0x20);        // Send 00100000 to data pins, set for 8-bit interface (Function set)
     _delay_us(120);             // Delay at least 39usec
 
-    lcd_writebyte(0x20);        // Send 00100000 to data pins, set for 8-bit interface (Function set)
+    lcd_writecommand(0x20);        // Send 00100000 to data pins, set for 8-bit interface (Function set)
     _delay_ms(2);               // Delay at least 37usec
     
-    lcd_writebyte(0xF0);        // Send 11110000 to data pins, set for 8-bit interface (Display ON/OFF control)
+    lcd_writecommand(0xF0);        // Send 11110000 to data pins, set for 8-bit interface (Display ON/OFF control)
     _delay_ms(2);               // Delay at least 37usec
     
-    lcd_writebyte(0x10);        // Send 00010000 to data pins, set for 8-bit interface (Display Clear) (DB4=1/0)
+    lcd_writecommand(0x10);        // Send 00010000 to data pins, set for 8-bit interface (Display Clear) (DB4=1/0)
     _delay_ms(2);               // Delay at least 1.53msec
     
-    lcd_writebyte(0x10);        // Send 01110000 to data pins, set for 8-bit interface (Entry Mode Set)
+    lcd_writecommand(0x10);        // Send 01110000 to data pins, set for 8-bit interface (Entry Mode Set)
     _delay_ms(2);               // Delay at least 1.53ms                           
     
     
-    lcd_writecommand(0x38);     // Function Set: 8-bit interface, 2 lines
+    //lcd_writecommand(0x38);     // Function Set: 8-bit interface, 2 lines
 
-    lcd_writecommand(0x0f);     // Display and cursor on
+   // lcd_writecommand(0x0f);     // Display and cursor on
 }
 
 /*
@@ -86,9 +86,12 @@ void lcd_writedata(unsigned char x)
 */
 void lcd_writebyte(unsigned char x)
 {
+    //                         
+    
+    
     PORTC &= ~LCD_Data_C;
-    PORTD |= (x & LCD_Data_D);  // Put low 7 bits of data in PORTD
     PORTD &= ~LCD_Data_D;
+    PORTD |= (x & LCD_Data_D);  // Put low 7 bits of data in PORTD
     PORTC|= (x & LCD_Data_C);  // Put high 1 bits of data in PORTC
     PORTB &= ~(LCD_RW);// Set R/W=0
     PORTD &= ~(LCD_E); // Set E=0
