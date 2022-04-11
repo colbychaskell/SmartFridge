@@ -18,7 +18,7 @@ void lcd_init(void)
     _delay_ms(5);               // Delay at least 39usec
 
     lcd_writebyte(0x30);        // Send 00110000 to data pins, set for 8-bit interface (Function set)
-    _delay_us(1);             // Delay at least 37usec
+    _delay_ms(1);             // Delay at least 37usec
 
     
     lcd_writebyte(0x0f);        // Send 00001111 to data pins, set for 8-bit interface (Display ON/OFF control)
