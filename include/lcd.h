@@ -18,13 +18,11 @@ void lcd_wait(void);
 
 #define LCD_RS          (1 << PB2)
 #define LCD_RW          (1 << PB1)
-#define LCD_E           (1 << PD3)
+#define LCD_E           (1 << PC3)
 #define LCD_Bits        (LCD_RS|LCD_RW|LCD_E)
 
 
 
-
-#define LCD_Data_C     0x01     // Bits in Port C for LCD data (00000001)
-#define LCD_Data_D     0xF7     // Bits in Port D for LCD data (11110111)
-#define LCD_Status     (1 << PC0) // Bit in Port D for LCD busy status
+#define LCD_Data_D     0xFF     // Bits in Port D for LCD data (11111111)
+#define LCD_Status     (1 << PD7) // Bit 7 in Port D for LCD busy status
 
