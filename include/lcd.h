@@ -18,7 +18,7 @@ void lcd_wait(void);
 
 #define LCD_RS          (1 << PB2)
 #define LCD_RW          (1 << PB1)
-#define LCD_E           (1 << PC3)
+#define LCD_E           (1 << PC0)
 #define LCD_Bits        (LCD_RS|LCD_RW|LCD_E)
 
 
