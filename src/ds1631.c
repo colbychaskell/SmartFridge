@@ -71,14 +71,15 @@ unsigned char ds1631_conversion_status() {
 */
 int ds1631_read_temp() {
     unsigned char config = ds1631_get_config();
-    int temperature;
-    if (config & 0x01) { // If we are in one-shot mode then wait for conversion, otherwise read now
-        while (!ds1631_conversion_status()) {
-            // Wait for conversion to complete
-        }                                                                         
-    }
+    //int temperature;
+    unsigned char temperature;
+    // if (config & 0x01) { // If we are in one-shot mode then wait for conversion, otherwise read now
+    //     while (!ds1631_conversion_status()) {
+    //         // Wait for conversion to complete
+    //     }                                                                         
+    // }
     temperature = ds1631_read_command(DS1631_READ_TEMP);
     // _delay_ms(2000);
     if(temperature & 0x800) temperature |= 0xF000; // Keep negative sign
-    return temperature;
+    return (int)temperature;
 }
