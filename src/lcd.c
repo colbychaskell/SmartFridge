@@ -8,8 +8,8 @@
 void lcd_init(void)
 {
     DDRD |= LCD_Data_D;               // Set PORTD bits 0-8 for output
-    DDRB |= LCD_RS;             
-    DDRC |= LCD_E;
+    DDRB |= LCD_Bits;             
+   
 
     _delay_ms(50);                    // Delay at least 40ms
 
@@ -84,11 +84,15 @@ void lcd_writedata(char x)
 void lcd_writebyte(char x)
 {
     PORTD = x;
-    PORTC &= ~(LCD_E); // Set E=0
-    PORTC |= LCD_E;             // Set E to 1
-    PORTC |= LCD_E;             // Extend E pulse > 230ns
-    PORTC &= ~LCD_E;            // Set E to 0
+    PORTB &= ~(LCD_E); // Set E=0
+    PORTB |= LCD_E;             // Set E to 1
+    PORTB |= LCD_E;             // Extend E pulse > 230ns
+    PORTB &= ~LCD_E;            // Set E to 0
 }
+
+
+
+
 
 /*
   lcd_wait - Wait for the BUSY flag to reset
