@@ -2,6 +2,7 @@
 #define DS1631_H
 
 #include <stdio.h>
+#include <string.h>
 #include "i2c.h"
 
 #define DS1631_ID 0x90
@@ -24,19 +25,21 @@
 #define DS1631_CONFIG_THF 0x40
 #define DS1631_CONFIG_DONE 0x80
 
+#define OSTR_SIZE   80
+
 // Initialization
 void ds1631_init();                                   // Initialize sensor without default configuration
 void ds1631_set_config(const unsigned char* config); // Specify a byte to put into sensor config register
 unsigned char ds1631_get_config();
 
 // Command Helper Functions
-unsigned char ds1631_read_command(const unsigned char command);
+void ds1631_read_command(const unsigned char command, unsigned char* rbuf);
 void ds1631_write_command(const unsigned char command);
 
 // Reading Temperature
 void ds1631_start_convert(); // Starts a temperature conversion if in one shot mode
 void ds1631_stop_convert();
 unsigned char ds1631_convert_status(); // Check if one-shot temperature conversion has finished
-int ds1631_read_temp(); // Returns the temperature
+int ds1631_read_temp(unsigned char* rbuf); // Returns the temperature
 
 #endif
