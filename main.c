@@ -25,7 +25,7 @@ int main(void)
     unsigned char rbuf[8];
     //int temp = ds1631_read_temp(rbuf);
     ds1631_read_temp(rbuf);
-    //_delay_ms(500);
+    _delay_ms(500);
     
     char hello_char[6] = {'h', 'e', 'l', 'l', 'o', '\0'};
     char temp_char[9];
