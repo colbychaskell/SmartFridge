@@ -28,7 +28,7 @@ int main(void)
     _delay_ms(500);
     
     char hello_char[6] = {'h', 'e', 'l', 'l', 'o', '\0'};
-    char temp_char[9];
+    char temp_char[11];
     temp_char[0] = (char)rbuf[0];
     temp_char[1] = (char)rbuf[1];
     temp_char[2] = (char)rbuf[2];
@@ -37,7 +37,9 @@ int main(void)
     temp_char[5] = (char)rbuf[5];
     temp_char[6] = (char)rbuf[6];
     temp_char[7] = (char)rbuf[7];
-    temp_char[8] = '\0';
+    temp_char[8] =  (char)223;
+    temp_char[9] =  'C';
+    temp_char[10] = '\0';
     //temp_char[7] = (char)rbuf[7];
     /* LCD Use */
     lcd_init();
