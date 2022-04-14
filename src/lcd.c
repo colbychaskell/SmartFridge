@@ -7,33 +7,28 @@
 */
 void lcd_init(void)
 {
-    DDRD |= LCD_Data_D;         // Set PORTD bits 0-8 for output
-    DDRB |= LCD_RS;
-    DDRB |= LCD_RW;
+    DDRD |= LCD_Data_D;               // Set PORTD bits 0-8 for output
+    DDRB |= LCD_RS;             
     DDRC |= LCD_E;
 
-    PORTB &= ~LCD_RS;           // Clear RS (PB2) for command write
+    _delay_ms(50);                    // Delay at least 40ms
 
-    _delay_ms(50);              // Delay at least 40ms
+    lcd_writecommand(0b00111100);           // Send 00111100 to data pins, set for 8-bit interface (Function set)
+    _delay_ms(50);                    // Delay at least 39usec
 
-    lcd_writebyte(0x38);        // Send 00111000 to data pins, set for 8-bit interface (Function set)
-    _delay_ms(5);               // Delay at least 39usec
+    lcd_writecommand(0b00111100);           // Send 00111100 to data pins, set for 8-bit interface (Function set)
+    _delay_ms(50);                    // Delay at least 39usec
 
-    lcd_writebyte(0x38);        // Send 00111000 to data pins, set for 8-bit interface (Function set)
-     _delay_ms(5);              // Delay at least 37usec
+    lcd_writecommand(0b00001111);           // Display ON 
+    _delay_ms(5);                     // Delay
 
-    
-    lcd_writebyte(0x0f);        // Send 00001111 to data pins, set for 8-bit interface (Display(DB2), Cursor(DB1), Blinking(DB0))
-     _delay_ms(5);                // Delay at least 37usec
-    
-    lcd_writebyte(0x01);        // Send 00000001 to data pins, set for 8-bit interface (Display Clear) (DB4=1/0)
-     _delay_ms(5);                // Delay at least 1.53msec
-    
-    lcd_writebyte(0x07);        // Send 00000111 to data pins, set for 8-bit interface (Entry Mode Set)
-     _delay_ms(5);                // Delay at least 1.53ms                           
-    
-    
-    
+    lcd_writecommand(0b00000001);           // Display Clear
+    _delay_ms(5);                     // Delay at least 1.53msec
+
+    lcd_writecommand(0b00000110);           // Entry Mode Set 00000111
+    _delay_ms(5);                     // Delay at least 1.53ms    
+
+    //lcd_writecommand(0x02);                    
 }
 
 /*
@@ -54,14 +49,19 @@ void lcd_moveto(unsigned char row, unsigned char col)
 void lcd_stringout(char *str)
 {
     char ch;
-    while ((ch = *str++) != '\0')
-	  lcd_writedata(ch);
+    while ((ch = *str) != '\0')
+    {
+      lcd_writedata(ch);
+      str++;
+    }
 }
+
+
 
 /*
   lcd_writecommand - Output a byte to the LCD command register.
 */
-void lcd_writecommand(unsigned char x)
+void lcd_writecommand(char x)
 {
     PORTB &= ~LCD_RS;       // Clear RS for command write
     lcd_writebyte(x);
@@ -71,7 +71,7 @@ void lcd_writecommand(unsigned char x)
 /*
   lcd_writedata - Output a byte to the LCD data register
 */
-void lcd_writedata(unsigned char x)
+void lcd_writedata(char x)
 {
     PORTB |= LCD_RS;	// Set RS for data write
     lcd_writebyte(x);
@@ -81,11 +81,9 @@ void lcd_writedata(unsigned char x)
 /*
   lcd_writebyte - Output a byte to the LCD
 */
-void lcd_writebyte(unsigned char x)
+void lcd_writebyte(char x)
 {
-                          
     PORTD = x;
-    PORTB &= ~(LCD_RW);// Set R/W=0
     PORTC &= ~(LCD_E); // Set E=0
     PORTC |= LCD_E;             // Set E to 1
     PORTC |= LCD_E;             // Extend E pulse > 230ns
@@ -113,9 +111,11 @@ void lcd_wait()
         bf = PIND & LCD_Status; // Read status bit
         PORTC &= ~LCD_E;        // Set E=0
     } while (bf != 0);          // If Busy (PORTD, bit 7 = 1), loop
-
+    
+    _delay_ms(100);
     DDRD |= LCD_Data_D;     // Set PORTD bits for output
 #else
     _delay_ms(2);		// Delay for 2ms
 #endif
+
 }
