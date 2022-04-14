@@ -33,12 +33,38 @@ void ds1631_write_command(const unsigned char command) {
 /*
     Sends specified byte as command to DS1631 w/ 2 bytes read back
 */
-unsigned char ds1631_read_command(const unsigned char command)
+
+
+void ds1631_read_command(const unsigned char command, unsigned char* rbuf)
 {
-    unsigned char rbuf;
+    unsigned char rbuf2[2];
+   
+
+    char ostr[OSTR_SIZE];           // Buffer for creating strings
+
     unsigned char wbuf[1] = {command};
-    i2c_io(DS1631_ID, wbuf, 1, NULL, 0, &rbuf, 2);
-    return rbuf;
+    i2c_io(DS1631_ID, wbuf, 1, NULL, 0, rbuf2, 2);
+    snprintf(ostr, OSTR_SIZE, "Temp: %d%d", rbuf2[0], rbuf2[1]);
+    // char temp1 = rbuf2[0] + '0';
+    // char temp2 = rbuf2[1] + '0';
+    // rbuf[0] = temp1;
+    // rbuf[1] = temp2;
+    rbuf[0] = ostr[0];
+    rbuf[1] = ostr[1];
+    rbuf[2] = ostr[2];
+    rbuf[3] = ostr[3];
+    rbuf[4] = ostr[4];
+    rbuf[5] = ostr[5];
+    rbuf[6] = ostr[6];
+    rbuf[7] = ostr[7];
+    
+    
+    
+    //rbuf[8] = ostr[8];
+    
+    
+    //rbuf[0] = 'h';
+    //return rbuf;
 }
 
 /*
@@ -69,17 +95,19 @@ unsigned char ds1631_conversion_status() {
 /*
     Read temp data (2 bytes) into buf
 */
-int ds1631_read_temp() {
+int ds1631_read_temp(unsigned char* rbuf) {
     unsigned char config = ds1631_get_config();
     //int temperature;
-    unsigned char temperature;
+    //unsigned char temperature;
     // if (config & 0x01) { // If we are in one-shot mode then wait for conversion, otherwise read now
     //     while (!ds1631_conversion_status()) {
     //         // Wait for conversion to complete
     //     }                                                                         
     // }
-    temperature = ds1631_read_command(DS1631_READ_TEMP);
+    ds1631_read_command(DS1631_READ_TEMP, rbuf); 
     // _delay_ms(2000);
+    // int temperature = (int)rbuf[0];
+    int temperature = (int)'h';
     if(temperature & 0x800) temperature |= 0xF000; // Keep negative sign
-    return (int)temperature;
+    return temperature;
 }
