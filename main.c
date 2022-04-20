@@ -17,6 +17,11 @@ const unsigned char str2[] PROGMEM = ">> USC EE459L <<78901234";
 
 volatile int aboveTempThresh = 0; // flag set by temp ISR
 
+int min_door_open; // the minute when door was opened
+int sec_door_open; // the second when door was opened
+
+int doorJustOpened = 1; // flag to tell if the door just opened
+
 // char ostr[OSTR_SIZE];           // Buffer for creating strings
 
 int main(void)
@@ -129,20 +134,61 @@ int main(void)
         lcd_stringout("          ");
         lcd_moveto(2, 0);
         lcd_stringout(light_char);
+        int minAndSec[2];
         if (lux == 0)
         {
+            doorJustOpened = 1; 
+            // time elapsed code
+            unsigned char rbuf_time[19];
+            getTime(rbuf_time, minAndSec);
+            // compare current time with the stored time
             lcd_moveto(3, 0);
+            int minPassed = minAndSec[0] - min_door_open;
+            int secPassed = minAndSec[1] - sec_door_open;
+            char minBuf[OSTR_SIZE]; // Buffer for creating strings
+                                    // memset(ostr, 0, OSTR_SIZE);
+            char minBuf2[OSTR_SIZE];
+            // snprintf(ostr, OSTR_SIZE, "Light: %d%d", rbuf_low[0], rbuf_high[0]);
 
-            lcd_stringout("          ");
-            lcd_moveto(3, 0);
-            lcd_stringout("Door Closed!");
+            snprintf(minBuf, OSTR_SIZE, "%d", minPassed);
+            snprintf(minBuf2, OSTR_SIZE, "%d", minPassed - 1);
+            if (minAndSec[1] >= sec_door_open)
+            {
+
+                char time_open_char[20] = {'d', 'o', 'o', 'r', ' ', 'o', 'p', 'e', 'n', ' ', 'f', 'o', 'r', ' ', minBuf[0], '!', '\0'};
+                lcd_stringout(time_open_char);
+            }
+            else
+            {
+
+                char time_open_char[20] = {'d', 'o', 'o', 'r', ' ', 'o', 'p', 'e', 'n', ' ', 'f', 'o', 'r', ' ', minBuf2[0], '!', '\0'};
+                lcd_stringout(time_open_char);
+            }
+
+            _delay_ms(50);
+
+            // // output door open/closed code
+            // lcd_moveto(3, 0);
+            // lcd_stringout("            ");
+            // lcd_moveto(3, 0);
+            // lcd_stringout("Door Closed!");
         }
         else
         {
-            lcd_moveto(3, 0);
-            lcd_stringout("          ");
-            lcd_moveto(3, 0);
-            lcd_stringout("Door Open!");
+            if (doorJustOpened == 1)
+            {
+                doorJustOpened = 0;
+                unsigned char rbuf_time[19];
+                getTime(rbuf_time, minAndSec);
+                min_door_open = minAndSec[0];
+                sec_door_open = minAndSec[1];
+            }
+
+          
+            // lcd_moveto(3, 0);
+            // lcd_stringout("            ");
+            // lcd_moveto(3, 0);
+            // lcd_stringout("Door Open!");
         }
         _delay_ms(50);
 
@@ -170,7 +216,9 @@ int main(void)
         /* REAL TIME CLOCK CODE */
         // read time
         unsigned char rbuf_time[19];
-        getTime(rbuf_time);
+
+        getTime(rbuf_time, minAndSec);
+
         _delay_ms(50);
         // output time to LCD
         char time_char[20];
