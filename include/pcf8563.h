@@ -11,7 +11,7 @@
 #define DEVICE_ADDR 0xA2
 
 // REG ADDR
-#define PCF8563_address   0x51
+#define PCF8563_address   0xA2
 #define Control_status_1  0x00
 #define Control_status_2  0x01
 #define VL_seconds        0x02
