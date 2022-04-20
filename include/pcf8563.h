@@ -42,7 +42,7 @@ void setDay(uint8_t day);
 void setHour(uint8_t hour);
 void setMinut(uint8_t minut);
 void setSecond(uint8_t second);
-void getTime(unsigned char *rbuf);
+void getTime(unsigned char *rbuf, int* minAndSec);
 unsigned char bcd_to_number(uint8_t first, uint8_t second);
 uint8_t get_first_number(unsigned short number);
 uint8_t get_second_number(unsigned short number);
