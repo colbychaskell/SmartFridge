@@ -9,6 +9,7 @@
 #include "lcd.h"
 #include "pcf8563.h"
 #include "bh1750.h"
+#include "tsl2591.h"
 
 const unsigned char str1[] PROGMEM = ">> at328-5.c hi <<901234";
 
@@ -30,11 +31,12 @@ int main(void)
     i2c_init(BDIV);
     ds1631_init();
     pcf8563Init();
+    tsl2591_init();
     // bh1750_init();
     lcd_init();
     lcd_moveto(0, 0);
     char hello_char[6] = {'h', 'e', 'l', 'l', 'o', '\0'};
-    lcd_stringout(hello_char);
+    // lcd_stringout(hello_char);
 
     /* TEMPERATURE SENSOR CONFIG */
     char warn_char[9] = {'t', 'e', 'm', 'p', '>', '4', (char)223, 'C', '\0'};
@@ -46,15 +48,14 @@ int main(void)
     ds1631SetTH();
 
     /* RTC CONFIG */
-    stopClock();
+    // stopClock();
     setYear(22);
     setMonth(4);
     setDay(19);
     setHour(12);
-    setMinut(30);
-    setSecond(20);
-    //startClock();
-    stopClock();
+    setMinut(57);
+    setSecond(00);
+    startClock();
     while (1)
     {
         /* TEMP SENSOR CODE */
@@ -76,7 +77,7 @@ int main(void)
         temp_char[10] = '\0';
 
         // output temperature to LCD
-        lcd_moveto(1, 0);
+        lcd_moveto(0, 0);
         _delay_ms(10);
         lcd_stringout(temp_char);
 
@@ -85,20 +86,67 @@ int main(void)
         // check second digit
         if ((int)rbuf[7] > 4)
         {
-            lcd_moveto(1, 11);
+            lcd_moveto(0, 11);
             _delay_ms(10);
             lcd_stringout(warn_char);
         }
         // check first digit if second is okay
         else if ((int)rbuf[6] > 0)
         {
-            lcd_moveto(1, 11);
+            lcd_moveto(0, 11);
             _delay_ms(10);
             lcd_stringout(warn_char);
         }
         _delay_ms(50);
 
-        // /* LIGHT SENSOR CODE */
+        /* TSL2591 */
+
+        unsigned char rbuf_light[14];
+        char light_char[14];
+        // memset(light_char, 0, 14);
+        _delay_ms(50);
+        float lux = readLight(rbuf_light);
+        _delay_ms(50);
+        light_char[0] = (char)rbuf_light[0];
+        light_char[1] = (char)rbuf_light[1];
+        light_char[2] = (char)rbuf_light[2];
+        light_char[3] = (char)rbuf_light[3];
+        light_char[4] = (char)rbuf_light[4];
+        light_char[5] = (char)rbuf_light[5];
+        light_char[6] = (char)rbuf_light[6];
+        light_char[7] = (char)rbuf_light[7];
+        light_char[8] = (char)rbuf_light[8];
+        light_char[9] = (char)rbuf_light[9];
+        light_char[10] = (char)rbuf_light[10];
+        light_char[11] = (char)rbuf_light[11];
+        light_char[12] = (char)rbuf_light[12];
+        light_char[13] = (char)rbuf_light[13];
+        // light_char[14] = (char)rbuf_light[14];
+        // light_char[15] = (char)rbuf_light[15];
+
+        // output light to LCD
+        lcd_moveto(2, 6);
+        lcd_stringout("          ");
+        lcd_moveto(2, 0);
+        lcd_stringout(light_char);
+        if (lux == 0)
+        {
+            lcd_moveto(3, 0);
+
+            lcd_stringout("          ");
+            lcd_moveto(3, 0);
+            lcd_stringout("Door Closed!");
+        }
+        else
+        {
+            lcd_moveto(3, 0);
+            lcd_stringout("          ");
+            lcd_moveto(3, 0);
+            lcd_stringout("Door Open!");
+        }
+        _delay_ms(50);
+
+        // // /* BH1750 LIGHT SENSOR CODE */
         // // read lux
         // unsigned char rbuf_light[9];
         // bh1750_readLight(rbuf_light);
@@ -121,10 +169,11 @@ int main(void)
 
         /* REAL TIME CLOCK CODE */
         // read time
-        unsigned char rbuf_time[18];
+        unsigned char rbuf_time[19];
         getTime(rbuf_time);
+        _delay_ms(50);
         // output time to LCD
-        char time_char[17];
+        char time_char[20];
         time_char[0] = (char)rbuf_time[0];
         time_char[1] = (char)rbuf_time[1];
         time_char[2] = (char)rbuf_time[2];
@@ -141,11 +190,14 @@ int main(void)
         time_char[13] = (char)rbuf_time[13];
         time_char[14] = (char)rbuf_time[14];
         time_char[15] = (char)rbuf_time[15];
-        time_char[16] = '\0';
-        lcd_moveto(4, 0);
+        time_char[16] = (char)rbuf_time[16];
+        time_char[17] = (char)rbuf_time[17];
+        time_char[18] = (char)rbuf_time[18];
+        time_char[19] = '\0';
+        lcd_moveto(1, 0);
         _delay_ms(10);
         lcd_stringout(time_char);
-        _delay_ms(1000);
+        _delay_ms(100);
     }
 
     return 0; /* never reached */

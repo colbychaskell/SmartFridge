@@ -1,8 +1,8 @@
 DEVICE     = atmega328p
 CLOCK      = 9830400
 PROGRAMMER = -c usbtiny -P usb
-OBJECTS    = main.o i2c.o ds1631.o lcd.o pcf8563.o bh1750.o
-SRC	   = src
+OBJECTS    = main.o i2c.o ds1631.o lcd.o pcf8563.o bh1750.o tsl2591.o
+SRC		   = src
 INCLUDE    = include
 FUSES      = -U hfuse:w:0xd9:m -U lfuse:w:0xe0:m
 
@@ -47,6 +47,9 @@ pcf8563.o: $(SRC)/pcf8563.c $(INCLUDE)/pcf8563.h
 	$(COMPILE) -c $< -o $@
 
 bh1750.o: $(SRC)/bh1750.c $(INCLUDE)/bh1750.h
+	$(COMPILE) -c $< -o $@
+	
+tsl2591.o: $(SRC)/tsl2591.c $(INCLUDE)/tsl2591.h
 	$(COMPILE) -c $< -o $@
 
 .c.o: 
