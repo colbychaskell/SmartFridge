@@ -16,22 +16,42 @@ Send a START condition and the slave address for write (A2h). 2. Set the address
 
 void pcf8563Init(void)
 {
-    // clear TESTC bit (Control_status_1 &= ~(1<<3)))
-    unsigned char wbuf[1];
+    // clear control status 1
+    uint8_t wbuf[1];
+    uint8_t wbuf2[1];
     wbuf[0] = Control_status_1;
-    unsigned char rbuf[1];
-    i2c_io(PCF8563_address, wbuf, 1, NULL, 0, rbuf, 1);
-    rbuf[0] &= ~(1 << 3);
-    // write to clear TESTC bit
-    i2c_io(PCF8563_address, wbuf, 1, rbuf, 1, NULL, 0);
+    wbuf2[0] = 0x00;
+    i2c_io(PCF8563_address, wbuf, 1, wbuf2, 1, NULL, 0);
+    
+    // clear control status 2
+    wbuf[0] = Control_status_2;
+    wbuf2[0] = 0x00;
+    i2c_io(PCF8563_address, wbuf, 1, wbuf2, 1, NULL, 0);
+    
+    
+    
+    
+    
+    
+    
+    // // clear TESTC bit (Control_status_1 &= ~(1<<3)))
+    // unsigned char wbuf[1];
+    // wbuf[0] = Control_status_1;
+    // unsigned char wbuf2[1];
+    // wbuf2[0] = 0x00;
+    // unsigned char rbuf[1];
+    // i2c_io(PCF8563_address, wbuf, 1, NULL, 0, rbuf, 1);
+    // rbuf[0] &= ~(1 << 3);
+    // // write to clear TESTC bit
+    // i2c_io(PCF8563_address, wbuf, 1, rbuf, 1, NULL, 0);
 
-    // clear CLKOUT enable bit ((CLKOUT_control,~(1<<7)))
+    // // clear CLKOUT enable bit ((CLKOUT_control,~(1<<7)))
 
-    wbuf[0] = CLKOUT_control;
-    i2c_io(PCF8563_address, wbuf, 1, NULL, 0, rbuf, 1);
-    rbuf[0] &= ~(1 << 7);
-    // write to clear TESTC bit
-    i2c_io(PCF8563_address, wbuf, 1, rbuf, 1, NULL, 0);
+    // wbuf[0] = CLKOUT_control;
+    // i2c_io(PCF8563_address, wbuf, 1, NULL, 0, rbuf, 1);
+    // rbuf[0] &= ~(1 << 7);
+    // // write to clear TESTC bit
+    // i2c_io(PCF8563_address, wbuf, 1, rbuf, 1, NULL, 0);
 }
 
 // Start the clock
@@ -210,7 +230,7 @@ void getTime(unsigned char *rbuf_time)
     rbuf[6] = bcd_to_number((rbuf_sec[0] & 0b01110000) >> 4, rbuf_sec[0] & 0b00001111);
 
     char ostr[OSTR_SIZE];
-    snprintf(ostr, OSTR_SIZE, "Time: %d/%d/%d, %d:%d", rbuf[1], rbuf[2], rbuf[0], rbuf[4], rbuf[5]);
+    snprintf(ostr, OSTR_SIZE, "Time:%d/%d/%d,%d:%d", rbuf[1], rbuf[2], rbuf[0], rbuf[4], rbuf[5]);
 
     rbuf_time[0] = ostr[0];
     rbuf_time[1] = ostr[1];
@@ -228,6 +248,10 @@ void getTime(unsigned char *rbuf_time)
     rbuf_time[13] = ostr[13];
     rbuf_time[14] = ostr[14];
     rbuf_time[15] = ostr[15];
+    rbuf_time[16] = ostr[16];
+    rbuf_time[17] = ostr[17];
+    rbuf_time[18] = ostr[18];
+    rbuf_time[19] = ostr[19];
 
     return;
 }
