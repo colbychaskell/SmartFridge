@@ -168,7 +168,7 @@ void setSecond(uint8_t second)
 // Get current time
 // Parameters: None
 // Returns: Time (current code encoded into the Time structure)
-void getTime(unsigned char *rbuf_time)
+void getTime(unsigned char *rbuf_time, int* minAndSec )
 {
 
     // read data registers contents
@@ -253,7 +253,10 @@ void getTime(unsigned char *rbuf_time)
     rbuf_time[18] = ostr[18];
     rbuf_time[19] = ostr[19];
 
-    return;
+     //minAndSec[0] = min  minAndSec[1] = sec
+    minAndSec[0] = (int)rbuf[5];
+    minAndSec[1] = (int)rbuf[6];
+    return ;
 }
 
 // Convert BCD format to number
