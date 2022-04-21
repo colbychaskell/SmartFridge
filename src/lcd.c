@@ -18,7 +18,7 @@ void lcd_init(void)
   lcd_writecommand(0b00111100); // Send 00111100 to data pins, set for 8-bit interface (Function set)
   _delay_ms(50);                // Delay at least 39usec
 
-  lcd_writecommand(0b00001111); // Display ON
+  lcd_writecommand(0b00001100); // Display ON
   _delay_ms(5);                 // Delay
 
   lcd_writecommand(0b00000001); // Display Clear
@@ -52,7 +52,6 @@ void lcd_moveto(unsigned char row, unsigned char col)
     pos = 0x54 + col;
     lcd_writecommand(0x80 | pos);
   }
-  
 }
 
 /*

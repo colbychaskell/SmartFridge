@@ -142,7 +142,7 @@ void setHour(uint8_t hour)
 // Parameters:
 //  *uint8_t minut -> selected day (you can set values 0-59)
 // Returns:    None
-void setMinut(uint8_t minut)
+void setMinute(uint8_t minut)
 {
     uint8_t data[1];
     data[0] = ((get_second_number(minut)) << 4) | (get_first_number(minut));
@@ -229,9 +229,10 @@ void getTime(unsigned char *rbuf_time, int* minAndSec )
     rbuf[5] = bcd_to_number((rbuf_min[0] & 0b01110000) >> 4, rbuf_min[0] & 0b00001111);
     rbuf[6] = bcd_to_number((rbuf_sec[0] & 0b01110000) >> 4, rbuf_sec[0] & 0b00001111);
 
-    char ostr[OSTR_SIZE];
-    snprintf(ostr, OSTR_SIZE, "Time:%d/%d/%d,%d:%d", rbuf[1], rbuf[2], rbuf[0], rbuf[4], rbuf[5]);
+    //char ostr[OSTR_SIZE];
+    snprintf(rbuf_time, 20, "Time:%d/%d/%d,%d:%d", rbuf[1], rbuf[2], rbuf[0], rbuf[4], rbuf[5]);
 
+/*
     rbuf_time[0] = ostr[0];
     rbuf_time[1] = ostr[1];
     rbuf_time[2] = ostr[2];
@@ -252,6 +253,7 @@ void getTime(unsigned char *rbuf_time, int* minAndSec )
     rbuf_time[17] = ostr[17];
     rbuf_time[18] = ostr[18];
     rbuf_time[19] = ostr[19];
+    */
 
      //minAndSec[0] = min  minAndSec[1] = sec
     minAndSec[0] = (int)rbuf[5];

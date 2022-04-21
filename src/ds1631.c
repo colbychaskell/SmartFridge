@@ -5,9 +5,11 @@
 //  XX: POL and 1SHOT bits => we set to 10
 void ds1631_init()
 {
-    unsigned char buf[1] = {DS1631_CONFIG_1SHOT};
+    //unsigned char buf[1] = {DS1631_CONFIG_1SHOT};
+    unsigned char buf[1] = {DS1631_CONFIG_DEFAULT};
     ds1631_set_config(buf);
 }
+
 /*
     Updates config register to specified byte
 */
@@ -52,22 +54,8 @@ void ds1631_write_command(const unsigned char command, unsigned char *data)
 
 void ds1631_read_command(const unsigned char command, unsigned char *rbuf)
 {
-    unsigned char rbuf2[2];
-
-    char ostr[OSTR_SIZE]; // Buffer for creating strings
-
     unsigned char wbuf[1] = {command};
-    i2c_io(DS1631_ID, wbuf, 1, NULL, 0, rbuf2, 2);
-    snprintf(ostr, OSTR_SIZE, "Temp: %d%d", rbuf2[0], rbuf2[1]);
-
-    rbuf[0] = ostr[0];
-    rbuf[1] = ostr[1];
-    rbuf[2] = ostr[2];
-    rbuf[3] = ostr[3];
-    rbuf[4] = ostr[4];
-    rbuf[5] = ostr[5];
-    rbuf[6] = ostr[6];
-    rbuf[7] = ostr[7];
+    i2c_io(DS1631_ID, wbuf, 1, NULL, 0, rbuf, 2);
 }
 
 /*
@@ -83,32 +71,42 @@ void ds1631StopConvert()
     ds1631_write_command(DS1631_STOP_CONV, NULL);
 }
 
-void ds1631SetTH(uint8_t temp)
+void ds1631SetTH(uint8_t temp_high, uint8_t temp_low)
 {
     // unsigned char temp[2];
     // temp[0] = 0;
     // temp[1] = 0;
     // ds1631_write_command(DS1631_SET_TH, temp);
-    
+
     // set the 16 bit value for the low threshold also reset the given threshold
-    
-    unsigned char wbuf[1];
-    uint8_t data[2];
-    wbuf[0] = DS1631_SET_TH;
-    data[0] = temp;
-    data[1] = 0;
+
+    unsigned char command[1];
+    uint8_t msb = temp_high;
+    uint8_t lsb = 0;
+
+
+    uint8_t temp[2] = {msb, lsb};
+    command[0] = DS1631_SET_TH;
     // set high threshold
-    i2c_io(DS1631_ID, wbuf, 1, data, 2, NULL , 0);
-  
+    // ds1631_write_command(DS1631_SET_TH, (unsigned char) temp)
+    i2c_io(DS1631_ID, command, 1, temp, 2, NULL, 0);
+
+    // Set low threshold
+    
+    command[0] = DS1631_SET_TL;
+    // ds1631_write_command(DS1631_SET_TL, (unsigned char) temp)
+    i2c_io(DS1631_ID, command, 1, temp, 2, NULL, 0);
 }
 
-void ds1631ReadTH(unsigned char* th_buf)
+void ds1631ReadTH(unsigned char *th_buf, unsigned char* th_buf_low)
 {
     unsigned char wbuf[1];
     wbuf[0] = DS1631_SET_TH;
-    i2c_io(DS1631_ID, wbuf, 1, NULL, 0, th_buf , 2);
+    i2c_io(DS1631_ID, wbuf, 1, NULL, 0, th_buf, 2);
     
- 
+  
+    wbuf[0] = DS1631_SET_TL;
+    i2c_io(DS1631_ID, wbuf, 1, NULL, 0, th_buf_low, 2);
 }
 
 unsigned char ds1631_conversion_status()
@@ -132,15 +130,18 @@ unsigned char ds1631_conversion_status()
 */
 void ds1631_read_temp(unsigned char *rbuf)
 {
-    unsigned char config = ds1631_get_config();
-    // //int temperature;
-    // //unsigned char temperature;
-    if (config & 0x01)
-    { // If we are in one-shot mode then wait for conversion, otherwise read now
-        while (!ds1631_conversion_status())
-        {
-            // Wait for conversion to complete
+    if(0) {
+        while(!ds1631_conversion_status()) {
+
         }
     }
     ds1631_read_command(DS1631_READ_TEMP, rbuf);
+}
+
+void ds1631_formatted_temp(char* temp_string) {
+    unsigned char temp[2];
+    ds1631_read_temp(temp);             // Read temp from DS1631
+    snprintf(temp_string, 12, "Temp: %2u%cC", temp[0], 223); //Format string i.e. "Temp: 25 C"
+
+    
 }
