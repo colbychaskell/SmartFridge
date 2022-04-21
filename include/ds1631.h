@@ -14,10 +14,11 @@
 #define DS1631_ACCESS_CONFIG 0xAC
 #define DS1631_SWPOR 0x54
 #define DS1631_SET_TH 0xA1
+#define DS1631_SET_TL 0xA2
 
 // Configuration Register Values
-// #define DS1631_CONFIG_DEFAULT 0x02
-#define DS1631_CONFIG_DEFAULT 0xFE
+#define DS1631_CONFIG_DEFAULT 0x02
+//#define DS1631_CONFIG_DEFAULT 0xFE
 #define DS1631_CONFIG_1SHOT 0x01
 #define DS1631_CONFIG_POL 0x02
 #define DS1631_CONFIG_1SHOT_POL 0x03
@@ -44,6 +45,7 @@ void ds1631_start_convert(); // Starts a temperature conversion if in one shot m
 void ds1631_stop_convert();
 unsigned char ds1631_convert_status(); // Check if one-shot temperature conversion has finished
 void ds1631_read_temp(unsigned char* rbuf); // Returns the temperature
-void ds1631SetTH(uint8_t temp);
-void ds1631ReadTH(uint8_t* th_buf);
+void ds1631_formatted_temp(char* temp_string); // Returns formatted string to display temp
+void ds1631SetTH(uint8_t temp, uint8_t temp_low);
+void ds1631ReadTH(uint8_t* th_buf, unsigned char* th_buf_low);
 #endif

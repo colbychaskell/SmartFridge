@@ -40,7 +40,7 @@ void setYear(uint8_t year);
 void setMonth(uint8_t month);
 void setDay(uint8_t day);
 void setHour(uint8_t hour);
-void setMinut(uint8_t minut);
+void setMinute(uint8_t minut);
 void setSecond(uint8_t second);
 void getTime(unsigned char *rbuf, int* minAndSec);
 unsigned char bcd_to_number(uint8_t first, uint8_t second);
