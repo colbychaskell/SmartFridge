@@ -22,14 +22,27 @@ int sec_door_open; // the second when door was opened
 
 int doorJustOpened = 1; // flag to tell if the door just opened
 
+volatile int buttonPressed1 = 0;
+volatile int buttonPressed2 = 0;
+
+
+
 // char ostr[OSTR_SIZE];           // Buffer for creating strings
 
 int main(void)
 {
     /* Interrupt Initialization Code*/
-    // DDRC   &= ~(1 << PC0);
-    PCICR |= 0b00000010;
-    PCMSK1 |= (1 << PC0);
+    DDRC   &= ~(1 << PC0);
+    DDRB   &= ~(1 << PB0);
+    DDRC   &= ~(1 << PC1);
+    DDRC   &= ~(1 << PC2);
+    PORTB |= 0b00000001;
+    PORTC |= 0b00000111;
+    PCICR |= 0b00000011;
+    PCIFR |= 0b00000011;
+    
+    PCMSK1 |= 0x07; //00000111
+    PCMSK0  |= 1;
     sei();
 
     /* INITIALIZATION CODE */
@@ -37,20 +50,21 @@ int main(void)
     ds1631_init();
     pcf8563Init();
     tsl2591_init();
-    // bh1750_init();
+   
     lcd_init();
     lcd_moveto(0, 0);
     char hello_char[6] = {'h', 'e', 'l', 'l', 'o', '\0'};
     // lcd_stringout(hello_char);
 
     /* TEMPERATURE SENSOR CONFIG */
-    char warn_char[9] = {'t', 'e', 'm', 'p', '>', '4', (char)223, 'C', '\0'};
-    unsigned char buf[1] = {DS1631_CONFIG_1SHOT};
-    ds1631_set_config(buf);
+    char warn_char[10] = {'t', 'e', 'm', 'p', '>', '2','5', (char)223, 'C', '\0'};
+    // unsigned char buf[1] = {DS1631_CONFIG_1SHOT};
+    ds1631SetTH(0); // 25 degress celsius
+    _delay_ms(5);
     ds1631_start_convert();
     _delay_ms(5);
     // write to the high threshold register in temperature sensor
-    ds1631SetTH();
+   
 
     /* RTC CONFIG */
     // stopClock();
@@ -86,23 +100,23 @@ int main(void)
         _delay_ms(10);
         lcd_stringout(temp_char);
 
-        // output warning to LCD if temperature is above 4C
-        _delay_ms(500);
-        // check second digit
-        if ((int)rbuf[7] > 4)
-        {
-            lcd_moveto(0, 11);
-            _delay_ms(10);
-            lcd_stringout(warn_char);
-        }
-        // check first digit if second is okay
-        else if ((int)rbuf[6] > 0)
-        {
-            lcd_moveto(0, 11);
-            _delay_ms(10);
-            lcd_stringout(warn_char);
-        }
-        _delay_ms(50);
+        // // output warning to LCD if temperature is above 4C
+        // _delay_ms(500);
+        // // check second digit
+        // if ((int)rbuf[7] > 4)
+        // {
+        //     lcd_moveto(0, 11);
+        //     _delay_ms(10);
+        //     lcd_stringout(warn_char);
+        // }
+        // // check first digit if second is okay
+        // else if ((int)rbuf[6] > 0)
+        // {
+        //     lcd_moveto(0, 11);
+        //     _delay_ms(10);
+        //     lcd_stringout(warn_char);
+        // }
+        // _delay_ms(50);
 
         /* TSL2591 */
 
@@ -135,16 +149,16 @@ int main(void)
         lcd_moveto(2, 0);
         lcd_stringout(light_char);
         int minAndSec[2];
-        if (lux == 0)
+        if (lux < 3000)
         {
-            doorJustOpened = 1; 
+            doorJustOpened = 1;
             // time elapsed code
             unsigned char rbuf_time[19];
             getTime(rbuf_time, minAndSec);
             // compare current time with the stored time
             lcd_moveto(3, 0);
             int minPassed = minAndSec[0] - min_door_open;
-            int secPassed = minAndSec[1] - sec_door_open;
+
             char minBuf[OSTR_SIZE]; // Buffer for creating strings
                                     // memset(ostr, 0, OSTR_SIZE);
             char minBuf2[OSTR_SIZE];
@@ -155,13 +169,13 @@ int main(void)
             if (minAndSec[1] >= sec_door_open)
             {
 
-                char time_open_char[20] = {'d', 'o', 'o', 'r', ' ', 'o', 'p', 'e', 'n', ' ', 'f', 'o', 'r', ' ', minBuf[0], '!', '\0'};
+                char time_open_char[18] = {'D', 'o', 'o', 'r', ' ', 'o', 'p', 'e', 'n', ' ', 'f', 'o', 'r', ' ', minBuf[0], ' ', 'm', '\0'};
                 lcd_stringout(time_open_char);
             }
             else
             {
 
-                char time_open_char[20] = {'d', 'o', 'o', 'r', ' ', 'o', 'p', 'e', 'n', ' ', 'f', 'o', 'r', ' ', minBuf2[0], '!', '\0'};
+                char time_open_char[18] = {'D', 'o', 'o', 'r', ' ', 'o', 'p', 'e', 'n', ' ', 'f', 'o', 'r', ' ', minBuf2[0], ' ', 'm', '\0'};
                 lcd_stringout(time_open_char);
             }
 
@@ -175,8 +189,11 @@ int main(void)
         }
         else
         {
+
             if (doorJustOpened == 1)
             {
+                lcd_moveto(3, 0);
+                lcd_stringout("                  ");
                 doorJustOpened = 0;
                 unsigned char rbuf_time[19];
                 getTime(rbuf_time, minAndSec);
@@ -184,34 +201,12 @@ int main(void)
                 sec_door_open = minAndSec[1];
             }
 
-          
             // lcd_moveto(3, 0);
             // lcd_stringout("            ");
             // lcd_moveto(3, 0);
             // lcd_stringout("Door Open!");
         }
         _delay_ms(50);
-
-        // // /* BH1750 LIGHT SENSOR CODE */
-        // // read lux
-        // unsigned char rbuf_light[9];
-        // bh1750_readLight(rbuf_light);
-        // // output lux to LCD
-        // char temp_char2[11];
-        // temp_char2[0] = (char)rbuf_light[0];
-        // temp_char2[1] = (char)rbuf_light[1];
-        // temp_char2[2] = (char)rbuf_light[2];
-        // temp_char2[3] = (char)rbuf_light[3];
-        // temp_char2[4] = (char)rbuf_light[4];
-        // temp_char2[5] = (char)rbuf_light[5];
-        // temp_char2[6] = (char)rbuf_light[6];
-        // temp_char2[7] = (char)rbuf_light[7];
-        // temp_char2[8] = '\0';
-        // lcd_moveto(3, 0);
-        // _delay_ms(10);
-        // lcd_stringout(temp_char2);
-
-        // _delay_ms(50);
 
         /* REAL TIME CLOCK CODE */
         // read time
@@ -246,16 +241,80 @@ int main(void)
         _delay_ms(10);
         lcd_stringout(time_char);
         _delay_ms(100);
+        
+        
+        
+        // TEMP INTERRUPT CODE
+        if (aboveTempThresh){
+            lcd_moveto(0,11);
+            lcd_stringout("      ");
+            lcd_stringout(warn_char);
+        
+        
+        }
+        
+        
+        if (buttonPressed1){
+            buttonPressed1 = 0;
+            lcd_moveto(3,0);
+            lcd_stringout("button 1 pressed");
+        }
+           
+        if (buttonPressed2){
+            buttonPressed2 = 0;
+            lcd_moveto(3,0);
+            lcd_stringout("button 2 pressed");
+        }
+        
+        unsigned char th_buf[2];
+        ds1631ReadTH(th_buf);
+        char string_buf[OSTR_SIZE];
+        snprintf(string_buf,OSTR_SIZE,  "Yo: %d", th_buf[0]);
+        lcd_moveto(3, 0);
+        lcd_stringout(string_buf);
+        
     }
 
     return 0; /* never reached */
 }
 
+
+
+ISR(PCINT0_vect){
+  aboveTempThresh = 1;
+
+
+}
+
 ISR(PCINT1_vect)
 {
-    // Some bit changed, see if it is PC0
-    if ((PORTC & (1 << PC0)) == 1)
-    {
-        aboveTempThresh = 1;
+    // Button code
+    
+    
+    //if ((PINC & (1 << PC0))){
+       
+        
+    
+    //}
+    
+    
+    if ((PINC & (1 << PC1))){
+        buttonPressed1 = 1;
+        
+    
     }
+    if ((PINC & (1 << PC2))){
+        buttonPressed2 = 1;
+     
+    
+    }
+    
+    
+    
+    
+    // Some bit changed, see if it is PC0
+    
+    //aboveTempThresh = 1;
 }
+
+
