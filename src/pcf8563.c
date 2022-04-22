@@ -168,7 +168,7 @@ void setSecond(uint8_t second)
 // Get current time
 // Parameters: None
 // Returns: Time (current code encoded into the Time structure)
-void getTime(unsigned char *rbuf_time, int* minAndSec )
+void getTime(unsigned char *rbuf_time, int* current_time )
 {
 
     // read data registers contents
@@ -229,35 +229,11 @@ void getTime(unsigned char *rbuf_time, int* minAndSec )
     rbuf[5] = bcd_to_number((rbuf_min[0] & 0b01110000) >> 4, rbuf_min[0] & 0b00001111);
     rbuf[6] = bcd_to_number((rbuf_sec[0] & 0b01110000) >> 4, rbuf_sec[0] & 0b00001111);
 
-    //char ostr[OSTR_SIZE];
-    snprintf(rbuf_time, 20, "Time:%d/%d/%d,%d:%d", rbuf[1], rbuf[2], rbuf[0], rbuf[4], rbuf[5]);
+    // snprintf(rbuf_time, 20, "Time:%d/%d/%d,%d:%d", rbuf[1], rbuf[2], rbuf[0], rbuf[4], rbuf[5]);
+    snprintf(rbuf_time, 6, "%02d:%02d", rbuf[4], rbuf[5]);
 
-/*
-    rbuf_time[0] = ostr[0];
-    rbuf_time[1] = ostr[1];
-    rbuf_time[2] = ostr[2];
-    rbuf_time[3] = ostr[3];
-    rbuf_time[4] = ostr[4];
-    rbuf_time[5] = ostr[5];
-    rbuf_time[6] = ostr[6];
-    rbuf_time[7] = ostr[7];
-    rbuf_time[8] = ostr[8];
-    rbuf_time[9] = ostr[9];
-    rbuf_time[10] = ostr[10];
-    rbuf_time[11] = ostr[11];
-    rbuf_time[12] = ostr[12];
-    rbuf_time[13] = ostr[13];
-    rbuf_time[14] = ostr[14];
-    rbuf_time[15] = ostr[15];
-    rbuf_time[16] = ostr[16];
-    rbuf_time[17] = ostr[17];
-    rbuf_time[18] = ostr[18];
-    rbuf_time[19] = ostr[19];
-    */
-
-     //minAndSec[0] = min  minAndSec[1] = sec
-    minAndSec[0] = (int)rbuf[5];
-    minAndSec[1] = (int)rbuf[6];
+    current_time[0] = (int)rbuf[5];
+    current_time[1] = (int)rbuf[6];
     return ;
 }
 

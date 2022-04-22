@@ -1,4 +1,5 @@
 #include "ds1631.h"
+#include <util/delay.h>
 
 // Initialize Sensor by setting config to default
 //(Power-up state: 100011XX (XX = user defined))
@@ -140,8 +141,11 @@ void ds1631_read_temp(unsigned char *rbuf)
 
 void ds1631_formatted_temp(char* temp_string) {
     unsigned char temp[2];
+    unsigned char temp2[2];
     ds1631_read_temp(temp);             // Read temp from DS1631
-    snprintf(temp_string, 12, "Temp: %2u%cC", temp[0], 223); //Format string i.e. "Temp: 25 C"
-
-    
+    _delay_ms(50);
+    ds1631_read_temp(temp2);
+    if(temp[0] == temp2[0]) {
+        snprintf(temp_string, 6, "%2u%cC", temp[0], 223); // Format string i.e. "Temp: 25 C"
+    }
 }
