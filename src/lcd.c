@@ -30,6 +30,11 @@ void lcd_init(void)
   // lcd_writecommand(0x02);
 }
 
+void lcd_cleardisplay() {
+  lcd_writecommand(0b00000001); // Display Clear
+  _delay_ms(5);                 // Delay at least 1.53msec
+}
+
 /*
   lcd_moveto - Move the cursor to the row and column given by the arguments.
   Row is 0 or 1, column is 0 - 15.

@@ -237,6 +237,74 @@ void getTime(unsigned char *rbuf_time, int* current_time )
     return ;
 }
 
+void getDate(int* current_date) {
+
+    // read data registers contents
+    //    uint8_t YEAR    = read(Years);
+
+    uint8_t wbuf_year[1];
+    wbuf_year[0] = Years;
+    uint8_t rbuf_year[1];
+    i2c_io(PCF8563_address, wbuf_year, 1, NULL, 0, rbuf_year, 1);
+
+    //    uint8_t MONTH   = read(Century_months);
+    uint8_t wbuf_month[1];
+    wbuf_month[0] = Century_months;
+    uint8_t rbuf_month[1];
+    i2c_io(PCF8563_address, wbuf_month, 1, NULL, 0, rbuf_month, 1);
+
+    //    uint8_t DAY     = read(Days);
+
+    uint8_t wbuf_day[1];
+    wbuf_day[0] = Days;
+    uint8_t rbuf_day[1];
+    i2c_io(PCF8563_address, wbuf_day, 1, NULL, 0, rbuf_day, 1);
+
+    //    uint8_t WEEKDAY = read(Weekdays);
+
+    uint8_t wbuf_weekday[1];
+    wbuf_weekday[0] = Weekdays;
+    uint8_t rbuf_weekday[1];
+    i2c_io(PCF8563_address, wbuf_weekday, 1, NULL, 0, rbuf_weekday, 1);
+    //    uint8_t HOUR    = read(Hours);
+
+    uint8_t wbuf_hour[1];
+    wbuf_hour[0] = Hours;
+    uint8_t rbuf_hour[1];
+    i2c_io(PCF8563_address, wbuf_hour, 1, NULL, 0, rbuf_hour, 1);
+
+    //    uint8_t MINUTE  = read(Minutes);
+
+    uint8_t wbuf_min[1];
+    wbuf_min[0] = Minutes;
+    uint8_t rbuf_min[1];
+    i2c_io(PCF8563_address, wbuf_min, 1, NULL, 0, rbuf_min, 1);
+
+    //    uint8_t SECONDS = read(VL_seconds);
+    uint8_t wbuf_sec[1];
+    wbuf_sec[0] = VL_seconds;
+    uint8_t rbuf_sec[1];
+    i2c_io(PCF8563_address, wbuf_sec, 1, NULL, 0, rbuf_sec, 1);
+
+    unsigned char rbuf[7];
+
+    // convert readed data to numbers using bcd_to_number function).
+    rbuf[0] = bcd_to_number((rbuf_year[0] & 0b11110000) >> 4, rbuf_year[0] & 0b00001111);
+    rbuf[1] = bcd_to_number((rbuf_month[0] & 0b00010000) >> 4, rbuf_month[0] & 0b00001111);
+    rbuf[2] = bcd_to_number((rbuf_day[0] & 0b00110000) >> 4, rbuf_day[0] & 0b00001111);
+    rbuf[3] = bcd_to_number(0, rbuf_weekday[0] & 0b00000111);
+    rbuf[4] = bcd_to_number((rbuf_hour[0] & 0b00110000) >> 4, rbuf_hour[0] & 0b00001111);
+    rbuf[5] = bcd_to_number((rbuf_min[0] & 0b01110000) >> 4, rbuf_min[0] & 0b00001111);
+    rbuf[6] = bcd_to_number((rbuf_sec[0] & 0b01110000) >> 4, rbuf_sec[0] & 0b00001111);
+    
+    current_date[0] = (int)rbuf[2];
+    current_date[1] = (int)rbuf[1];
+
+    current_date[2] = (int)rbuf[4];
+    current_date[3] = (int)rbuf[5];
+    current_date[4] = (int)rbuf[6];
+}
+
 // Convert BCD format to number
 // Parameters:
 //  * uint8_t first -> first digit

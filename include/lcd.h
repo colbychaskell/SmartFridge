@@ -9,6 +9,7 @@ void lcd_writecommand(char);
 void lcd_writedata(char);
 void lcd_writebyte(char);
 void lcd_wait(void);
+void lcd_cleardisplay();
 
 // char str1[] = ">>> at328-4.c <<78901234";
 // char str2[] = ">> USC EE459L <<78901234";
