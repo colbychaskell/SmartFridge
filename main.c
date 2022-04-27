@@ -28,6 +28,12 @@ float LIGHT_THRESHOLD = 6000;
 int numFoods = 0;
 int curr_fridge_row = 0;
 int overwrite_target = 0;
+int year;
+int month;
+int day;
+int hour;
+int sec;
+int min;
 
 char food[FOOD_NAME_LENGTH + 1];
 char food_names[MAX_FOOD_NUM][FOOD_NAME_LENGTH + 1];
@@ -38,10 +44,18 @@ enum
 {
     Door_Open_State,
     Door_Closed_State,
-    // Food_Selection_State,
+
+    Setting_State,
     Food_Input_State,
     Food_Overwrite_State,
-    Food_Display_State
+    Food_Display_State,
+    Set_Year_State,
+    Set_Month_State,
+    Set_Day_State,
+    Set_Hour_State,
+    Set_Min_State,
+    Set_Sec_State,
+
 };
 
 void output_temp_lcd()
@@ -53,15 +67,15 @@ void output_temp_lcd()
     lcd_stringout(temp_string);
 }
 
-void set_rtc_time()
+void set_rtc_time(int year, int month, int day, int hour, int min, int sec)
 {
     // stopClock();
-    setYear(22);
-    setMonth(4);
-    setDay(22);
-    setHour(10);
-    setMinute(05);
-    setSecond(00);
+    setYear(year);
+    setMonth(month);
+    setDay(day);
+    setHour(hour);
+    setMinute(min);
+    setSecond(sec);
     startClock();
 }
 
@@ -186,7 +200,7 @@ int main(void)
     ds1631_start_convert();
 
     /* RTC CONFIG */
-    set_rtc_time();
+    set_rtc_time(0,1,1,0,0,0);
     update_current_time(door_open_time);
 
     /* Initialize Temp Threshold Flag */
@@ -318,7 +332,7 @@ int main(void)
 
             if (buttonPressed2)
             {
-                state = Food_Display_State;
+                state = Setting_State;
                 value = 0;
                 lcd_cleardisplay();
                 buttonPressed2 = 0;
@@ -545,7 +559,8 @@ int main(void)
                 lcd_moveto(2, 0);
                 lcd_stringout(food);
             }
-            else{
+            else
+            {
                 // overwriting a food
                 lcd_moveto(0, 0);
                 char buf[20];
@@ -555,7 +570,6 @@ int main(void)
                 lcd_stringout("Black = Y, Red = N");
                 lcd_moveto(2, 0);
                 lcd_stringout(food);
-            
             }
 
             if (rotaryFlag)
@@ -596,10 +610,11 @@ int main(void)
                     list_of_food_min[overwrite_target] = curr_date[3];
                     list_of_food_sec[overwrite_target] = curr_date[4];
                     food_name_idx = 0;
-                    if (overwrite_target == numFoods){
+                    if (overwrite_target == numFoods)
+                    {
                         numFoods++;
                     }
-               
+
                     overwrite_target = numFoods;
 
                     value = 0;
@@ -618,6 +633,193 @@ int main(void)
                 state = Door_Open_State;
             }
         }
+        if (state == Setting_State)
+        {
+            lcd_moveto(0, 0);
+            lcd_stringout("Black=Food Menu?");
+            lcd_moveto(1, 0);
+            lcd_stringout("Red=Time Menu?");
+            if (buttonPressed2)
+            {
+                state = Food_Display_State;
+                value = 0;
+                lcd_cleardisplay();
+                buttonPressed2 = 0;
+            }
+
+            if (buttonPressed1)
+            {
+                state = Set_Year_State;
+                value = 0;
+                lcd_cleardisplay();
+                buttonPressed1 = 0;
+            }
+        }
+        if (state == Set_Year_State)
+        {
+            lcd_moveto(0, 0);
+            int new_year = value % 100;
+            char buf[20];
+            snprintf(buf, 20, "Choose year: %02d", new_year);
+
+            lcd_stringout(buf);
+            lcd_moveto(1, 0);
+            lcd_stringout("Black to advance");
+
+            if (buttonPressed2)
+            {
+                year = new_year;
+                state = Set_Month_State;
+                value = 0;
+                lcd_cleardisplay();
+                buttonPressed2 = 0;
+            }
+            if (rotaryFlag)
+            {
+                rotaryFlag = 0;
+                updateRotaryState();
+            }
+
+        }
+
+        if (state == Set_Month_State)
+        {
+            lcd_moveto(0, 0);
+            int new_month = (value % 12) + 1;
+            char buf[20];
+            snprintf(buf, 20, "Choose month: %02d", new_month);
+
+            lcd_stringout(buf);
+            lcd_moveto(1, 0);
+            lcd_stringout("Black to advance");
+
+            if (buttonPressed2)
+            {
+                month = new_month;
+                state = Set_Day_State;
+                value = 0;
+                lcd_cleardisplay();
+                buttonPressed2 = 0;
+            }if (rotaryFlag)
+            {
+                rotaryFlag = 0;
+                updateRotaryState();
+            }
+
+        }
+        
+        if (state == Set_Day_State)
+        {
+            lcd_moveto(0, 0);
+            int new_day = (value % 31) + 1;
+            char buf[20];
+            snprintf(buf, 20, "Choose day: %02d", new_day);
+
+            lcd_stringout(buf);
+            lcd_moveto(1, 0);
+            lcd_stringout("Black to advance");
+
+            if (buttonPressed2)
+            {
+                day = new_day;
+                state = Set_Hour_State;
+                value = 0;
+                lcd_cleardisplay();
+                buttonPressed2 = 0;
+            }
+            if (rotaryFlag)
+            {
+                rotaryFlag = 0;
+                updateRotaryState();
+            }
+
+        }
+        
+         if (state == Set_Hour_State)
+        {
+            lcd_moveto(0, 0);
+            int new_hour = (value % 31) + 1;
+            char buf[20];
+            snprintf(buf, 20, "Choose hour: %02d", new_hour);
+
+            lcd_stringout(buf);
+            lcd_moveto(1, 0);
+            lcd_stringout("Black to advance");
+
+            if (buttonPressed2)
+            {
+                hour = new_hour;
+                state = Set_Min_State;
+                value = 0;
+                lcd_cleardisplay();
+                buttonPressed2 = 0;
+            }
+            if (rotaryFlag)
+            {
+                rotaryFlag = 0;
+                updateRotaryState();
+            }
+
+        }
+        
+        if (state == Set_Min_State)
+        {
+            lcd_moveto(0, 0);
+            int new_min = (value % 31) + 1;
+            char buf[20];
+            snprintf(buf, 20, "Choose min: %02d", new_min);
+
+            lcd_stringout(buf);
+            lcd_moveto(1, 0);
+            lcd_stringout("Black to advance");
+
+            if (buttonPressed2)
+            {
+                min = new_min;
+                state = Set_Sec_State;
+                value = 0;
+                lcd_cleardisplay();
+                buttonPressed2 = 0;
+            }
+            if (rotaryFlag)
+            {
+                rotaryFlag = 0;
+                updateRotaryState();
+            }
+
+        }
+        
+        
+         if (state == Set_Sec_State)
+        {
+            lcd_moveto(0, 0);
+            int new_sec = (value % 31) + 1;
+            char buf[20];
+            snprintf(buf, 20, "Choose sec: %02d", new_sec);
+
+            lcd_stringout(buf);
+            lcd_moveto(1, 0);
+            lcd_stringout("Black to advance");
+
+            if (buttonPressed2)
+            {
+                sec = new_sec;
+                state = Door_Open_State;
+                set_rtc_time(year, month, day, hour, min, sec);
+                value = 0;
+                lcd_cleardisplay();
+                buttonPressed2 = 0;
+            }
+            if (rotaryFlag)
+            {
+                rotaryFlag = 0;
+                updateRotaryState();
+            }
+
+        }
+        
+        
+        
 
         // /* DEBUG ROTARY ENCODER */
         // if (rotaryFlag)
@@ -670,6 +872,7 @@ ISR(PCINT1_vect)
     if ((PINC & (1 << PC1))) // If alarm button is pressed
     {
         buttonPressed1 = 1;
+          value -= 1;
         // rotaryFlag = 0;
         _delay_ms(5);
         while (PINC & (1 << PC1))
