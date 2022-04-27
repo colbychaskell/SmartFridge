@@ -148,4 +148,5 @@ void ds1631_formatted_temp(char* temp_string) {
     if(temp[0] == temp2[0]) {
         snprintf(temp_string, 6, "%2u%cC", temp[0], 223); // Format string i.e. "Temp: 25 C"
     }
+    curr_temp = temp[0];
 }
