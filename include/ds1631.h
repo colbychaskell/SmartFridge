@@ -31,6 +31,8 @@
 
 #define OSTR_SIZE   80
 
+int curr_temp;
+
 // Initialization
 void ds1631_init();                                   // Initialize sensor without default configuration
 void ds1631_set_config(const unsigned char* config); // Specify a byte to put into sensor config register
