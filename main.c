@@ -10,6 +10,10 @@
 #include "pcf8563.h"
 #include "bh1750.h"
 #include "tsl2591.h"
+#include "rotary.h"
+
+#define FOOD_NAME_LENGTH 5
+#define MAX_FOOD_NUM 5
 
 volatile int aboveTempThresh = 0; // flag set by temp ISR
 volatile char tempThresChanged = 0;
@@ -18,10 +22,17 @@ volatile int buttonPressed2 = 0;
 volatile int alarmFlag = 0;
 
 volatile int menuPress = 0;
+volatile int rotaryFlag = 0;
 
 float LIGHT_THRESHOLD = 6000;
-int MAXFOODNUM = 3;
 int numFoods = 0;
+int curr_fridge_row = 0;
+int overwrite_target = 0;
+
+char food[FOOD_NAME_LENGTH + 1];
+char food_names[MAX_FOOD_NUM][FOOD_NAME_LENGTH + 1];
+
+char food_name_idx = 0;
 
 enum
 {
@@ -125,17 +136,15 @@ int main(void)
 {
     // store list of food times (Food #0, #1, #2, #3 ...)
     // Time: day/month -->
-    int list_of_food_day[MAXFOODNUM];
-    int list_of_food_month[MAXFOODNUM];
-    int list_of_food_hour[MAXFOODNUM];
-    int list_of_food_min[MAXFOODNUM];
-    int list_of_food_sec[MAXFOODNUM];
+    int list_of_food_day[MAX_FOOD_NUM];
+    int list_of_food_month[MAX_FOOD_NUM];
+    int list_of_food_hour[MAX_FOOD_NUM];
+    int list_of_food_min[MAX_FOOD_NUM];
+    int list_of_food_sec[MAX_FOOD_NUM];
 
     int current_time[2];
     int total_time_open = 0;
     int door_open_time[2];
-
-    int overwrite_target = 0;
 
     char flash_count = 0;
 
@@ -144,6 +153,7 @@ int main(void)
     /* Interrupt Initialization Code*/
     DDRC &= ~(1 << PC0);
     DDRB &= ~(1 << PB0);
+    DDRB &= ~(1 << PB7);
     DDRC |= (1 << PC3);
     DDRC &= ~(1 << PC1);
     DDRC &= ~(1 << PC2);
@@ -153,7 +163,8 @@ int main(void)
     PCIFR |= 0b00000011;
 
     PCMSK1 |= 0x07; // 00000111
-    PCMSK0 |= 1;
+    PCMSK0 |= 0x01; // 00000001
+
     sei();
 
     /* INITIALIZATION CODE */
@@ -162,11 +173,13 @@ int main(void)
     pcf8563Init();
     tsl2591_init();
     lcd_init();
+    rotary_init();
 
     unsigned char temp[2];
     ds1631_read_temp(temp);
 
-    int TEMP_THRESHOLD = (int)temp[0] + 2;
+    // int TEMP_THRESHOLD = (int)temp[0] + 2;
+    int TEMP_THRESHOLD = 27;
 
     /* TEMPERATURE SENSOR CONFIG */
     ds1631SetTH(TEMP_THRESHOLD, TEMP_THRESHOLD); // 25 degress celsius
@@ -306,6 +319,7 @@ int main(void)
             if (buttonPressed2)
             {
                 state = Food_Display_State;
+                value = 0;
                 lcd_cleardisplay();
                 buttonPressed2 = 0;
             }
@@ -358,6 +372,7 @@ int main(void)
             if (buttonPressed2)
             {
                 state = Food_Display_State;
+                value = 0;
                 lcd_cleardisplay();
                 buttonPressed2 = 0;
             }
@@ -386,16 +401,30 @@ int main(void)
             unsigned char date_buf[21];
             snprintf(date_buf, 21, "Date:%d/%d %d:%02d:%02d", currentDate[0], currentDate[1], currentDate[2], currentDate[3], currentDate[4]);
             lcd_stringout(date_buf);
-            for (int i = 0; i < numFoods; i++)
+
+            curr_fridge_row = value % numFoods;
+            if (numFoods < 3)
             {
-                lcd_moveto(i + 1, 0);
+                curr_fridge_row = 0;
+            }
+
+            int temp = 1;
+            for (int i = curr_fridge_row; i < numFoods; i++)
+            {
+
+                if (temp == 4)
+                    break;
+
+                lcd_moveto(temp, 0);
+                temp += 1;
                 int day = list_of_food_day[i];
                 int month = list_of_food_month[i];
                 int hour = list_of_food_hour[i];
                 int min = list_of_food_min[i];
                 int sec = list_of_food_sec[i];
-                snprintf(date_buf, 21, "Food#%d:%d/%d %d:%02d:%02d", i + 1, day, month, hour, min, sec);
+                snprintf(date_buf, 21, "%s:%d/%d %d:%02d:%02d", food_names[i], day, month, hour, min, sec);
                 lcd_stringout(date_buf);
+                memset(date_buf, 0, 21);
             }
             if (buttonPressed1)
             {
@@ -406,94 +435,180 @@ int main(void)
             }
             if (buttonPressed2)
             {
-                if (numFoods == MAXFOODNUM)
+                if (numFoods == MAX_FOOD_NUM)
                 {
                     // go to input new food state
                     lcd_cleardisplay();
                     state = Food_Overwrite_State;
                     buttonPressed2 = 0;
+                    value = 0;
                 }
                 else
                 {
                     // go to input new food state
                     lcd_cleardisplay();
                     state = Food_Input_State;
+                    value = 0;
                     buttonPressed2 = 0;
                 }
+            }
+            if (rotaryFlag)
+            {
+                rotaryFlag = 0;
+                updateRotaryState();
+                lcd_cleardisplay();
             }
         }
 
         if (state == Food_Overwrite_State)
         {
             lcd_moveto(0, 0);
-
+            curr_fridge_row = value % numFoods;
             char overwrite_string[18];
-            snprintf(overwrite_string, 18, "Overwrite Food %u?", overwrite_target);
+            snprintf(overwrite_string, 18, "Overwrite %s?", food_names[curr_fridge_row]);
             lcd_stringout(overwrite_string);
-            lcd_moveto(1, 0);
-            lcd_stringout("Black = Y, Red = N");
+            // lcd_moveto(1, 0);
+            // lcd_stringout("Black = Y, Red = N");
+
+            // overwrite_target = curr_fridge_row;
+
+            unsigned char date_buf[21];
+            int temp = 1;
+            for (int i = curr_fridge_row; i < numFoods; i++)
+            {
+
+                if (temp == 4)
+                    break;
+
+                lcd_moveto(temp, 0);
+                temp += 1;
+                int day = list_of_food_day[i];
+                int month = list_of_food_month[i];
+                int hour = list_of_food_hour[i];
+                int min = list_of_food_min[i];
+                int sec = list_of_food_sec[i];
+                snprintf(date_buf, 21, "%s:%d/%d %d:%02d:%02d", food_names[i], day, month, hour, min, sec);
+                lcd_stringout(date_buf);
+                memset(date_buf, 0, 21);
+            }
 
             if (buttonPressed2)
             {
+                // buttonPressed2 = 0;
+                // // add new food to list
+                // lcd_cleardisplay();
+                // int curr_date[5];
+                // getDate(curr_date);
+                // list_of_food_day[overwrite_target] = curr_date[0];
+                // list_of_food_month[overwrite_target] = curr_date[1];
+                // list_of_food_hour[overwrite_target] = curr_date[2];
+                // list_of_food_min[overwrite_target] = curr_date[3];
+                // list_of_food_sec[overwrite_target] = curr_date[4];
+                // value = 0;
+                // state = Food_Display_State;
+                // overwrite_target++;
+                // if (overwrite_target == 3)
+                // {
+                //     overwrite_target = 0;
+                // }
+
                 buttonPressed2 = 0;
                 // add new food to list
                 lcd_cleardisplay();
-                int curr_date[5];
-                getDate(curr_date);
-                list_of_food_day[overwrite_target] = curr_date[0];
-                list_of_food_month[overwrite_target] = curr_date[1];
-                list_of_food_hour[overwrite_target] = curr_date[2];
-                list_of_food_min[overwrite_target] = curr_date[3];
-                list_of_food_sec[overwrite_target] = curr_date[4];
-                
-                state = Food_Display_State;
-                overwrite_target++;
-                if (overwrite_target == 3)
-                {
-                    overwrite_target = 0;
-                }
+                value = 0;
+                state = Food_Input_State;
+                overwrite_target = curr_fridge_row;
             }
             if (buttonPressed1)
             {
                 buttonPressed1 = 0;
                 lcd_cleardisplay();
                 state = Door_Open_State;
+            }
+            if (rotaryFlag)
+            {
+                rotaryFlag = 0;
+                updateRotaryState();
+                lcd_cleardisplay();
             }
         }
 
         if (state == Food_Input_State)
         {
-            lcd_moveto(0, 0);
 
-            lcd_stringout("Enter new food?");
-            lcd_moveto(1, 0);
-            lcd_stringout("Black = Y, Red = N");
+            if (overwrite_target == numFoods)
+            {
+                lcd_moveto(0, 0);
+                lcd_stringout("Enter new food?");
+                lcd_moveto(1, 0);
+                lcd_stringout("Black = Y, Red = N");
+                lcd_moveto(2, 0);
+                lcd_stringout(food);
+            }
+            else{
+                // overwriting a food
+                lcd_moveto(0, 0);
+                char buf[20];
+                snprintf(buf, 20, "Overwriting %s", food_names[overwrite_target]);
+                lcd_stringout(buf);
+                lcd_moveto(1, 0);
+                lcd_stringout("Black = Y, Red = N");
+                lcd_moveto(2, 0);
+                lcd_stringout(food);
+            
+            }
+
+            if (rotaryFlag)
+            {
+                rotaryFlag = 0;
+                updateRotaryState();
+            }
+
+            char current_letter = value + '`';
+            if (current_letter == '`')
+            {
+                current_letter = ' ';
+            }
+            lcd_moveto(3, 0);
+            char current_letter_buf[3];
+            snprintf(current_letter_buf, 21, "%c", current_letter);
+            lcd_stringout(current_letter_buf);
 
             if (buttonPressed2)
             {
                 buttonPressed2 = 0;
-                if (numFoods == MAXFOODNUM)
-                {
-                    lcd_moveto(3, 0);
-                    lcd_stringout("Fridge is Full!");
-                    _delay_ms(2000);
-                    lcd_cleardisplay();
 
-                    state = Door_Open_State;
-                }
-                else
+                if (food_name_idx == FOOD_NAME_LENGTH)
                 {
                     // add new food to list
                     lcd_cleardisplay();
                     int curr_date[5];
                     getDate(curr_date);
-                    list_of_food_day[numFoods] = curr_date[0];
-                    list_of_food_month[numFoods] = curr_date[1];
-                    list_of_food_hour[numFoods] = curr_date[2];
-                    list_of_food_min[numFoods] = curr_date[3];
-                    list_of_food_sec[numFoods] = curr_date[4];
-                    numFoods++;
+                    // for (int k = 0; k < strlen(food); k++){
+                    //     food_names[numFoods][k] = food[k];
+                    // }
+                    strcpy(food_names[overwrite_target], food);
+
+                    memset(food, 0, strlen(food));
+                    list_of_food_day[overwrite_target] = curr_date[0];
+                    list_of_food_month[overwrite_target] = curr_date[1];
+                    list_of_food_hour[overwrite_target] = curr_date[2];
+                    list_of_food_min[overwrite_target] = curr_date[3];
+                    list_of_food_sec[overwrite_target] = curr_date[4];
+                    food_name_idx = 0;
+                    if (overwrite_target == numFoods){
+                        numFoods++;
+                    }
+               
+                    overwrite_target = numFoods;
+
+                    value = 0;
                     state = Food_Display_State;
+                }
+                else
+                {
+                    food[food_name_idx] = current_letter;
+                    food_name_idx++;
                 }
             }
             if (buttonPressed1)
@@ -503,12 +618,41 @@ int main(void)
                 state = Door_Open_State;
             }
         }
+
+        // /* DEBUG ROTARY ENCODER */
+        // if (rotaryFlag)
+        // {
+        //     rotaryFlag = 0;
+        //     updateRotaryState();
+        //     lcd_moveto(0, 5);
+        //     char temp_rotary_str[18];
+        //     // int curr_state = get_rotary_state();
+        //     snprintf(temp_rotary_str, 3, "%c", value + 'a');
+
+        //     lcd_stringout(temp_rotary_str);
+
+        //     //_delay_ms(2000);
+        // }
     }
     return 0; /* never reached */
 }
 
 ISR(PCINT0_vect)
 {
+    // if rotary encoder (PB7)
+
+    // int temp = get_rotary_state();
+    // if (temp != currState){
+    //     //rotary encode state changed
+    //     prevState = currState;
+    //     currState = temp;
+    //     rotaryFlag = 1;
+    // }
+
+    // debounce
+
+    // if temp interrupt activated
+
     tempThresChanged = 1;
     if (aboveTempThresh)
     {
@@ -522,9 +666,11 @@ ISR(PCINT0_vect)
 
 ISR(PCINT1_vect)
 {
+
     if ((PINC & (1 << PC1))) // If alarm button is pressed
     {
         buttonPressed1 = 1;
+        // rotaryFlag = 0;
         _delay_ms(5);
         while (PINC & (1 << PC1))
         {
@@ -532,13 +678,23 @@ ISR(PCINT1_vect)
         _delay_ms(5);
     }
 
-    if ((PINC & (1 << PC2))) // If button 2 is pressed
+    else if ((PINC & (1 << PC2))) // If button 2 is pressed
     {
+        // rotaryFlag = 0;
         buttonPressed2 = 1;
+        value -= 1;
         _delay_ms(5);
         while (PINC & (1 << PC2))
         {
         }
         _delay_ms(5);
+    }
+
+    else if (~(PINC & (1 << PC2)) && ~(PINC & (1 << PC1)))
+    {
+        // rotary encode state changed
+        rotaryFlag = 1;
+        prevState = currState;
+        currState = get_rotary_state();
     }
 }
